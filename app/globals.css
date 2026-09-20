@@ -1,0 +1,356 @@
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, "Apple SD Gothic Neo", sans-serif;
+  color: #172033;
+  background: #ffffff;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.container {
+  width: min(1120px, 92%);
+  margin: 0 auto;
+}
+
+/* =========================
+   상단 메뉴
+========================= */
+
+.header {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav {
+  min-height: 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 800;
+  color: #155eef;
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.menu a:hover {
+  color: #155eef;
+}
+
+.menuButton {
+  display: none;
+  border: 0;
+  background: none;
+  font-size: 27px;
+}
+
+.loginButton {
+  background: #155eef;
+  color: white !important;
+  padding: 12px 18px;
+  border-radius: 9px;
+}
+
+/* =========================
+   메인 대표 화면
+========================= */
+
+.hero {
+  background: linear-gradient(
+    135deg,
+    #eff6ff,
+    #ffffff
+  );
+  padding: 115px 0;
+}
+
+.heroBadge {
+  display: inline-block;
+  color: #155eef;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 22px;
+}
+
+.hero h1 {
+  font-size: clamp(32px, 5vw, 54px);
+  line-height: 1.35;
+  letter-spacing: -2px;
+  margin: 0 0 24px;
+}
+
+.hero p {
+  max-width: 650px;
+  color: #64748b;
+  line-height: 1.9;
+  font-size: 17px;
+}
+
+.heroButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 35px;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-block;
+  padding: 16px 25px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.primaryButton {
+  background: #155eef;
+  color: white;
+}
+
+.primaryButton:hover {
+  background: #1049bd;
+}
+
+.secondaryButton {
+  background: white;
+  color: #155eef;
+  border: 1px solid #cbd5e1;
+}
+
+/* =========================
+   서비스 소개
+========================= */
+
+.section {
+  padding: 100px 0;
+}
+
+.sectionHeading {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.sectionHeading span,
+.about span {
+  color: #155eef;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.sectionHeading h2,
+.about h2,
+.contact h2 {
+  font-size: clamp(26px, 4vw, 38px);
+  margin: 15px 0;
+}
+
+.sectionHeading p,
+.about p,
+.contact p {
+  color: #64748b;
+  line-height: 1.9;
+}
+
+.serviceGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.serviceCard {
+  padding: 30px 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: white;
+  transition: 0.2s;
+}
+
+.serviceCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(
+    0,
+    0,
+    0,
+    0.06
+  );
+}
+
+.serviceIcon {
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+.serviceCard h3 {
+  font-size: 19px;
+}
+
+.serviceCard p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #64748b;
+}
+
+/* =========================
+   회사 소개
+========================= */
+
+.about {
+  padding: 95px 0;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.about p {
+  max-width: 650px;
+  margin: 20px auto;
+}
+
+/* =========================
+   제작 문의
+========================= */
+
+.contact {
+  text-align: center;
+}
+
+.contact p {
+  margin-bottom: 30px;
+}
+
+.contact small {
+  display: block;
+  color: #94a3b8;
+  margin-top: 20px;
+}
+
+/* =========================
+   하단 푸터
+========================= */
+
+.footer {
+  background: #111827;
+  color: white;
+  padding: 45px 0;
+}
+
+.footer h3 {
+  margin-top: 0;
+}
+
+.footer p {
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* =========================
+   모바일 반응형 디자인
+========================= */
+
+@media (max-width: 768px) {
+  .nav {
+    min-height: 65px;
+  }
+
+  .logo {
+    font-size: 21px;
+  }
+
+  .menuButton {
+    display: block;
+  }
+
+  .menu {
+    display: none;
+    position: absolute;
+    top: 65px;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 24px;
+    flex-direction: column;
+    align-items: stretch;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 10px 20px rgba(
+      0,
+      0,
+      0,
+      0.05
+    );
+  }
+
+  .menu.open {
+    display: flex;
+  }
+
+  .hero {
+    padding: 75px 0;
+  }
+
+  .hero h1 {
+    letter-spacing: -1px;
+  }
+
+  .hero p {
+    font-size: 15px;
+  }
+
+  .heroButtons {
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    text-align: center;
+  }
+
+  .section {
+    padding: 70px 0;
+  }
+
+  .serviceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .serviceCard {
+    padding: 25px;
+  }
+
+  .about {
+    padding: 70px 0;
+  }
+
+  .footer {
+    padding: 35px 0;
+  }
+}
