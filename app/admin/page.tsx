@@ -16,16 +16,12 @@ type Application = {
   created_at: string | null;
 };
 
-type AdminCheck = {
-  isAdmin: boolean;
-  error?: string;
-};
+type ApplicationStatus = "approved" | "rejected";
 
 const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(
-    /\/rest\/v1\/?$/,
-    ""
-  ) ?? "";
+  process.env.NEXT_PUBLIC_SUPABASE_URL
+    ?.replace(/\/rest\/v1\/?$/, "")
+    .replace(/\/$/, "") ?? "";
 
 const SUPABASE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -38,45 +34,44 @@ function getHeaders(accessToken: string) {
   };
 }
 
+async function readError(response: Response): Promise<string> {
+  try {
+    const data = await response.json();
+
+    if (typeof data?.message === "string") {
+      return data.message;
+    }
+
+    if (typeof data?.error_description === "string") {
+      return data.error_description;
+    }
+
+    if (typeof data?.error === "string") {
+      return data.error;
+    }
+  } catch {
+    // 오류 응답이 JSON 형식이 아닌 경우
+  }
+
+  return `서버 오류 (${response.status})`;
+}
+
 function formatDate(value: string | null) {
   if (!value) return "-";
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
 
   return date.toLocaleString("ko-KR");
 }
 
-function getErrorMessage(
-  error: unknown,
-  fallback: string
-): string {
-  return error instanceof Error ? error.message : fallback;
-}
-
-async function readSupabaseError(
-  response: Response
-): Promise<string> {
-  try {
-    const result = await response.json();
-
-    if (typeof result?.message === "string") {
-      return result.message;
-    }
-
-    if (typeof result?.error_description === "string") {
-      return result.error_description;
-    }
-
-    if (typeof result?.error === "string") {
-      return result.error;
-    }
-  } catch {
-    // 응답 본문이 JSON이 아니면 상태 코드만 표시합니다.
-  }
-
-  return `서버 오류 (${response.status})`;
+function statusLabel(status: string | null) {
+  if (status === "approved") return "승인 완료";
+  if (status === "rejected") return "반려";
+  return "승인 대기";
 }
 
 export default function AdminPage() {
@@ -86,51 +81,15 @@ export default function AdminPage() {
   const [accessToken, setAccessToken] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [applications, setApplications] = useState<
-    Application[]
-  >([]);
+  const [applications, setApplications] = useState<Application[]>(
+    []
+  );
 
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState("");
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  const checkAdmin = useCallback(
-    async (token: string): Promise<AdminCheck> => {
-      try {
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/rpc/is_admin`,
-          {
-            method: "POST",
-            headers: getHeaders(token),
-            body: JSON.stringify({}),
-          }
-        );
-
-        if (!response.ok) {
-          return {
-            isAdmin: false,
-            error:
-              "관리자 권한을 확인하지 못했습니다.",
-          };
-        }
-
-        const result = await response.json();
-
-        return {
-          isAdmin: result === true,
-        };
-      } catch {
-        return {
-          isAdmin: false,
-          error:
-            "관리자 권한 확인 중 서버 연결 오류가 발생했습니다.",
-        };
-      }
-    },
-    []
-  );
 
   const loadApplications = useCallback(
     async (token: string) => {
@@ -148,28 +107,27 @@ export default function AdminPage() {
         );
 
         if (!response.ok) {
-          const detail = await readSupabaseError(response);
-
           throw new Error(
-            `신청 목록을 불러오지 못했습니다. ${detail}`
+            `신청 목록을 불러오지 못했습니다. ${await readError(
+              response
+            )}`
           );
         }
 
-        const result = await response.json();
+        const data: unknown = await response.json();
 
-        if (!Array.isArray(result)) {
+        if (!Array.isArray(data)) {
           throw new Error(
             "신청 목록의 응답 형식이 올바르지 않습니다."
           );
         }
 
-        setApplications(result as Application[]);
+        setApplications(data as Application[]);
       } catch (err) {
         setError(
-          getErrorMessage(
-            err,
-            "신청 목록을 불러오는 중 오류가 발생했습니다."
-          )
+          err instanceof Error
+            ? err.message
+            : "신청 목록을 불러오는 중 오류가 발생했습니다."
         );
       } finally {
         setLoading(false);
@@ -181,7 +139,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       setError(
-        "Supabase 환경변수가 설정되지 않았습니다. Vercel 설정을 확인해 주세요."
+        "Supabase 환경변수가 없습니다. Vercel 설정을 확인해 주세요."
       );
     }
   }, []);
@@ -190,6 +148,8 @@ export default function AdminPage() {
     event: React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
+
+    if (loading) return;
 
     setLoading(true);
     setError("");
@@ -202,7 +162,7 @@ export default function AdminPage() {
         );
       }
 
-      const response = await fetch(
+      const loginResponse = await fetch(
         `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
         {
           method: "POST",
@@ -217,23 +177,44 @@ export default function AdminPage() {
         }
       );
 
-      const result = await response.json();
-
-      if (!response.ok || !result.access_token) {
+      if (!loginResponse.ok) {
         throw new Error(
           "로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요."
         );
       }
 
-      const token = result.access_token as string;
+      const loginData = await loginResponse.json();
 
-      const adminResult = await checkAdmin(token);
+      const token = loginData.access_token as
+        | string
+        | undefined;
 
-      if (adminResult.error) {
-        throw new Error(adminResult.error);
+      if (!token) {
+        throw new Error(
+          "로그인 토큰을 받지 못했습니다."
+        );
       }
 
-      if (!adminResult.isAdmin) {
+      const adminResponse = await fetch(
+        `${SUPABASE_URL}/rest/v1/rpc/is_admin`,
+        {
+          method: "POST",
+          headers: getHeaders(token),
+          body: JSON.stringify({}),
+        }
+      );
+
+      if (!adminResponse.ok) {
+        throw new Error(
+          `관리자 권한 확인에 실패했습니다. ${await readError(
+            adminResponse
+          )}`
+        );
+      }
+
+      const adminResult = await adminResponse.json();
+
+      if (adminResult !== true) {
         throw new Error(
           "이 계정에는 관리자 권한이 없습니다."
         );
@@ -243,9 +224,7 @@ export default function AdminPage() {
       setIsAdmin(true);
       setPassword("");
 
-      setMessage(
-        "관리자 로그인이 완료되었습니다."
-      );
+      setMessage("관리자 로그인이 완료되었습니다.");
 
       await loadApplications(token);
     } catch (err) {
@@ -253,10 +232,9 @@ export default function AdminPage() {
       setIsAdmin(false);
 
       setError(
-        getErrorMessage(
-          err,
-          "로그인 중 오류가 발생했습니다."
-        )
+        err instanceof Error
+          ? err.message
+          : "로그인 중 오류가 발생했습니다."
       );
     } finally {
       setLoading(false);
@@ -269,48 +247,13 @@ export default function AdminPage() {
     setApplications([]);
     setPassword("");
     setProcessingId("");
-
-    setMessage("로그아웃되었습니다.");
     setError("");
+    setMessage("로그아웃되었습니다.");
   }
 
-  async function updateApplicationStatus(
-    applicationId: string,
-    status: "approved" | "rejected"
-  ) {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/company_applications?id=eq.${encodeURIComponent(
-        applicationId
-      )}`,
-      {
-        method: "PATCH",
-        headers: {
-          ...getHeaders(accessToken),
-          Prefer: "return=representation",
-        },
-        body: JSON.stringify({ status }),
-      }
-    );
-
-    if (!response.ok) {
-      const detail = await readSupabaseError(response);
-
-      throw new Error(
-        `신청 상태 변경에 실패했습니다. ${detail}`
-      );
-    }
-
-    const result = await response.json();
-
-    if (!Array.isArray(result) || result.length !== 1) {
-      throw new Error(
-        "신청 상태 변경 결과를 확인하지 못했습니다."
-      );
-    }
-  }
-
-  async function handleApprove(
-    application: Application
+  async function changeStatus(
+    application: Application,
+    nextStatus: ApplicationStatus
   ) {
     if (!accessToken || !isAdmin) {
       setError(
@@ -319,14 +262,21 @@ export default function AdminPage() {
       return;
     }
 
-    if (application.status === "approved") {
-      setError("이미 승인된 신청입니다.");
+    if (processingId) return;
+
+    if (application.status === nextStatus) {
+      setError(
+        nextStatus === "approved"
+          ? "이미 승인된 업체입니다."
+          : "이미 반려된 신청입니다."
+      );
       return;
     }
 
     if (
-      !application.name?.trim() ||
-      !application.phone?.trim()
+      nextStatus === "approved" &&
+      (!application.name?.trim() ||
+        !application.phone?.trim())
     ) {
       setError(
         "업체명 또는 연락처가 없어 승인할 수 없습니다."
@@ -334,8 +284,11 @@ export default function AdminPage() {
       return;
     }
 
+    const action =
+      nextStatus === "approved" ? "승인" : "반려";
+
     const confirmed = window.confirm(
-      `${application.name} 업체를 승인하시겠습니까?\n승인하면 공개 업체 목록에 등록됩니다.`
+      `${application.name || "해당 업체"}의 등록 신청을 ${action}하시겠습니까?`
     );
 
     if (!confirmed) return;
@@ -346,150 +299,71 @@ export default function AdminPage() {
 
     try {
       /*
-       * approved_companies의 확인된 7개 열:
-       * id, name, description, phone,
-       * regions, services, images
+       * approved_companies는 VIEW이므로
+       * INSERT 또는 UPDATE하지 않습니다.
        *
-       * 신청 ID를 공개 업체 ID로 사용해
-       * 중복 승인 시 업체가 중복 등록되지 않도록 합니다.
+       * 원본 company_applications의
+       * status만 변경합니다.
        */
-      const approvedCompany = {
-        id: application.id,
-        name: application.name.trim(),
-        description:
-          application.description?.trim() ?? "",
-        phone: application.phone.trim(),
-        regions: application.regions ?? [],
-        services: application.services ?? [],
-        images: application.images ?? [],
-      };
-
-      const insertResponse = await fetch(
-        `${SUPABASE_URL}/rest/v1/approved_companies?on_conflict=id`,
+      const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/company_applications?id=eq.${encodeURIComponent(
+          application.id
+        )}&status=eq.${encodeURIComponent(
+          application.status ?? "pending"
+        )}&select=id,status`,
         {
-          method: "POST",
+          method: "PATCH",
           headers: {
             ...getHeaders(accessToken),
-            Prefer:
-              "resolution=merge-duplicates,return=representation",
+            Prefer: "return=representation",
           },
-          body: JSON.stringify(approvedCompany),
+          body: JSON.stringify({
+            status: nextStatus,
+          }),
         }
       );
 
-      if (!insertResponse.ok) {
-        const detail = await readSupabaseError(
-          insertResponse
-        );
-
+      if (!response.ok) {
         throw new Error(
-          `공개 업체 등록에 실패했습니다. ${detail}`
-        );
-      }
-
-      const inserted = await insertResponse.json();
-
-      if (
-        !Array.isArray(inserted) ||
-        inserted.length !== 1
-      ) {
-        throw new Error(
-          "공개 업체 등록 결과를 확인하지 못했습니다."
-        );
-      }
-
-      try {
-        await updateApplicationStatus(
-          application.id,
-          "approved"
-        );
-      } catch (statusError) {
-        throw new Error(
-          `공개 업체 등록은 완료되었지만 신청 상태 변경에 실패했습니다. 다시 승인 버튼을 누르면 상태 변경을 재시도할 수 있습니다. ${getErrorMessage(
-            statusError,
-            ""
+          `${action} 처리에 실패했습니다. ${await readError(
+            response
           )}`
         );
       }
 
+      const updated: unknown = await response.json();
+
+      if (
+        !Array.isArray(updated) ||
+        updated.length !== 1 ||
+        updated[0]?.status !== nextStatus
+      ) {
+        throw new Error(
+          "신청 상태가 변경되지 않았습니다. 새로고침 후 현재 상태를 확인해 주세요."
+        );
+      }
+
       setApplications((previous) =>
         previous.map((item) =>
           item.id === application.id
-            ? { ...item, status: "approved" }
+            ? {
+                ...item,
+                status: nextStatus,
+              }
             : item
         )
       );
 
       setMessage(
-        `${application.name} 업체가 승인되어 공개 업체 목록에 등록되었습니다.`
+        nextStatus === "approved"
+          ? `${application.name} 업체를 승인했습니다. 공개 업체 목록에서 조회할 수 있습니다.`
+          : `${application.name || "해당 업체"}의 등록 신청을 반려했습니다.`
       );
     } catch (err) {
       setError(
-        getErrorMessage(
-          err,
-          "업체 승인 중 오류가 발생했습니다."
-        )
-      );
-    } finally {
-      setProcessingId("");
-    }
-  }
-
-  async function handleReject(
-    application: Application
-  ) {
-    if (!accessToken || !isAdmin) {
-      setError(
-        "관리자 로그인 후 다시 시도해 주세요."
-      );
-      return;
-    }
-
-    if (application.status === "approved") {
-      setError(
-        "이미 승인된 업체입니다. 공개 업체 목록에서 삭제하는 별도 절차가 필요합니다."
-      );
-      return;
-    }
-
-    if (application.status === "rejected") {
-      setError("이미 반려된 신청입니다.");
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `${application.name || "해당 업체"}의 등록 신청을 반려하시겠습니까?`
-    );
-
-    if (!confirmed) return;
-
-    setProcessingId(application.id);
-    setError("");
-    setMessage("");
-
-    try {
-      await updateApplicationStatus(
-        application.id,
-        "rejected"
-      );
-
-      setApplications((previous) =>
-        previous.map((item) =>
-          item.id === application.id
-            ? { ...item, status: "rejected" }
-            : item
-        )
-      );
-
-      setMessage(
-        `${application.name || "해당 업체"}의 등록 신청을 반려했습니다.`
-      );
-    } catch (err) {
-      setError(
-        getErrorMessage(
-          err,
-          "신청 반려 중 오류가 발생했습니다."
-        )
+        err instanceof Error
+          ? err.message
+          : "신청 상태 변경 중 오류가 발생했습니다."
       );
     } finally {
       setProcessingId("");
@@ -756,8 +630,7 @@ export default function AdminPage() {
                   fontSize: "21px",
                 }}
               >
-                등록 신청 목록 (
-                {applications.length}건)
+                등록 신청 목록 ({applications.length}건)
               </h2>
 
               <div
@@ -903,11 +776,9 @@ export default function AdminPage() {
                               fontWeight: 700,
                             }}
                           >
-                            {isApproved
-                              ? "승인 완료"
-                              : isRejected
-                              ? "반려"
-                              : "승인 대기"}
+                            {statusLabel(
+                              application.status
+                            )}
                           </span>
                         </div>
 
@@ -1033,8 +904,9 @@ export default function AdminPage() {
                             <button
                               type="button"
                               onClick={() =>
-                                handleApprove(
-                                  application
+                                changeStatus(
+                                  application,
+                                  "approved"
                                 )
                               }
                               disabled={isBusy}
@@ -1066,8 +938,9 @@ export default function AdminPage() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  handleReject(
-                                    application
+                                  changeStatus(
+                                    application,
+                                    "rejected"
                                   )
                                 }
                                 disabled={isBusy}
@@ -1106,7 +979,7 @@ export default function AdminPage() {
                                   "12px 0",
                               }}
                             >
-                              공개 업체 목록 등록 완료
+                              승인된 업체
                             </span>
                           )}
                         </div>
