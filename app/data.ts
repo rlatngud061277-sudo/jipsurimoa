@@ -1,4 +1,3 @@
-
 export type Company = {
   id: string;
   name: string;
@@ -44,6 +43,8 @@ export const services = [
   "기타 시공",
 ];
 
-export const companies: Company[] = [
-  // 실제 업체 등록 후 이곳에 추가합니다.
-];
+/*
+ * 기존 페이지와의 호환성을 위해 유지합니다.
+ * 실제 승인 업체 목록은 Supabase에서 조회합니다.
+ */
+export const companies: Company[] = [];
