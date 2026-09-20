@@ -1,166 +1,233 @@
 
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { companies, services, regions } from "./data";
 
 export default function Home() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [region, setRegion] = useState("");
+  const [service, setService] = useState("");
+  const [keyword, setKeyword] = useState("");
 
-  const services = [
-    {
-      title: "맞춤형 홈페이지 제작",
-      desc: "업종과 사업 목적에 맞는 반응형 홈페이지를 제작합니다.",
-      icon: "🌐",
-    },
-    {
-      title: "검색엔진 최적화",
-      desc: "네이버와 구글 검색엔진 등록 및 홈페이지 SEO 설정을 지원합니다.",
-      icon: "🔍",
-    },
-    {
-      title: "고객 전용 리포트",
-      desc: "홈페이지 제작 진행 상황과 검색 노출 현황을 확인할 수 있습니다.",
-      icon: "📊",
-    },
-    {
-      title: "홈페이지 유지관리",
-      desc: "홈페이지 수정 및 운영에 필요한 유지관리 서비스를 제공합니다.",
-      icon: "🛠️",
-    },
-  ];
+  const filtered = companies.filter((company) => {
+    const matchRegion =
+      !region || company.regions.includes(region);
+
+    const matchService =
+      !service || company.services.includes(service);
+
+    const matchKeyword =
+      !keyword ||
+      `${company.name} ${company.description} ${company.services.join(" ")} ${company.regions.join(" ")}`
+        .toLowerCase()
+        .includes(keyword.toLowerCase());
+
+    return matchRegion && matchService && matchKeyword;
+  });
 
   return (
     <main>
       <header className="header">
-        <div className="container nav">
-          <a href="/" className="logo">
-            집수리모아
-          </a>
+        <Link href="/" className="logo">
+          🏠 집수리모아
+        </Link>
 
-          <button
-            className="menuButton"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            ☰
-          </button>
-
-          <nav className={menuOpen ? "menu open" : "menu"}>
-            <a href="/">홈</a>
-            <a href="#services">서비스 소개</a>
-            <a href="#about">회사 소개</a>
-            <a href="#contact">제작 문의</a>
-            <a href="/login" className="loginButton">
-              고객 로그인
-            </a>
-          </nav>
-        </div>
+        <nav>
+          <Link href="/companies">업체 찾기</Link>
+          <Link href="/register">업체 등록</Link>
+        </nav>
       </header>
 
       <section className="hero">
         <div className="container">
           <span className="heroBadge">
-            WEBSITE & SEO SOLUTION
+            전국 집수리 업체 검색 플랫폼
           </span>
 
           <h1>
-            우리 업체의 가치를 높이는
+            우리 동네 집수리 전문가를
             <br />
-            맞춤형 홈페이지 제작
+            쉽고 빠르게 찾아보세요!
           </h1>
 
           <p>
-            집수리모아는 업체별 맞춤형 홈페이지 제작부터
-            검색엔진 최적화, 고객 전용 리포트까지
-            체계적인 웹사이트 관리 서비스를 제공합니다.
+            지역과 시공 종류를 선택하면
+            원하는 집수리 업체를 찾아볼 수 있습니다.
           </p>
 
-          <div className="heroButtons">
-            <a href="#contact" className="primaryButton">
-              홈페이지 제작 문의
-            </a>
+          <div className="searchBox">
+            <select
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+            >
+              <option value="">전체 지역</option>
+              {regions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
 
-            <a href="/login" className="secondaryButton">
-              고객 리포트 확인
+            <select
+              value={service}
+              onChange={(e) => setService(e.target.value)}
+            >
+              <option value="">전체 시공 종류</option>
+              {services.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="search"
+              placeholder="업체명 또는 시공 키워드"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+            />
+
+            <a href="#results" className="primaryButton">
+              업체 검색하기
             </a>
           </div>
         </div>
       </section>
 
-      <section id="services" className="section">
-        <div className="container">
-          <div className="sectionHeading">
-            <span>OUR SERVICES</span>
-            <h2>홈페이지 제작부터 운영까지</h2>
-            <p>
-              고객의 사업에 필요한 웹사이트 서비스를
-              제공합니다.
-            </p>
-          </div>
+      <section className="section container">
+        <div className="sectionTitle">
+          <h2>어떤 시공이 필요하세요?</h2>
+          <p>필요한 집수리 서비스를 선택해 보세요.</p>
+        </div>
 
-          <div className="serviceGrid">
-            {services.map((service) => (
-              <div className="serviceCard" key={service.title}>
-                <div className="serviceIcon">
-                  {service.icon}
+        <div className="serviceGrid">
+          {services.map((item) => (
+            <button
+              key={item}
+              className={
+                service === item
+                  ? "serviceCard selected"
+                  : "serviceCard"
+              }
+              onClick={() => {
+                setService(item);
+                document
+                  .getElementById("results")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              <span>🔧</span>
+              <strong>{item}</strong>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section
+        id="results"
+        className="section container"
+      >
+        <div className="sectionTitle">
+          <h2>집수리 업체 둘러보기</h2>
+          <p>
+            검색 조건에 맞는 업체 {filtered.length}곳
+          </p>
+        </div>
+
+        <div className="companyGrid">
+          {filtered.map((company) => (
+            <article
+              className="companyCard"
+              key={company.id}
+            >
+              <div className="companyImage">
+                {company.images.length > 0 ? (
+                  <img
+                    src={company.images[0]}
+                    alt={`${company.name} 시공사례`}
+                  />
+                ) : (
+                  <span>🏠</span>
+                )}
+              </div>
+
+              <div className="companyContent">
+                <span className="companyBadge">
+                  등록 업체
+                </span>
+
+                <h3>{company.name}</h3>
+
+                <p>{company.description}</p>
+
+                <div className="companyInfo">
+                  <span>
+                    📍 {company.regions.join(", ")}
+                  </span>
+
+                  <span>
+                    🔧 {company.services.join(", ")}
+                  </span>
                 </div>
 
-                <h3>{service.title}</h3>
-                <p>{service.desc}</p>
+                <div className="companyActions">
+                  <Link
+                    href={`/companies/${company.id}`}
+                    className="outlineButton"
+                  >
+                    상세보기
+                  </Link>
+
+                  <a
+                    href={`tel:${company.phone}`}
+                    className="primaryButton"
+                  >
+                    전화 문의
+                  </a>
+                </div>
               </div>
-            ))}
+            </article>
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <div className="emptyBox">
+            검색 조건에 맞는 등록 업체가 없습니다.
           </div>
-        </div>
+        )}
       </section>
 
-      <section id="about" className="about">
+      <section className="registerBanner">
         <div className="container">
-          <span>WHY JIPSURIMOA</span>
-
-          <h2>홈페이지 제작 이후까지 생각합니다.</h2>
+          <h2>집수리 업체를 운영하고 계신가요?</h2>
 
           <p>
-            단순한 홈페이지 제작을 넘어 검색엔진 등록,
-            운영 관리, 제작 현황 리포트까지
-            고객이 확인할 수 있는 서비스를 지향합니다.
-          </p>
-        </div>
-      </section>
-
-      <section id="contact" className="section">
-        <div className="container contact">
-          <h2>홈페이지 제작이 필요하신가요?</h2>
-
-          <p>
-            업종과 필요한 기능을 알려주시면
-            제작 방향을 함께 검토하겠습니다.
+            집수리모아에 업체를 등록하고
+            고객에게 시공 서비스를 소개해 보세요.
           </p>
 
-          <a
-            href="mailto:contact@example.com"
-            className="primaryButton"
+          <Link
+            href="/register"
+            className="whiteButton"
           >
-            홈페이지 제작 문의
-          </a>
-
-          <small>
-            문의 이메일은 실제 사업용 이메일로
-            변경할 예정입니다.
-          </small>
+            업체 등록 신청하기
+          </Link>
         </div>
       </section>
 
       <footer className="footer">
         <div className="container">
-          <h3>집수리모아</h3>
+          <strong>집수리모아</strong>
 
           <p>
-            홈페이지 제작 · 검색엔진 최적화 · 유지관리
+            전국 집수리 업체 검색 및 연결 플랫폼
           </p>
 
-          <p>
-            © {new Date().getFullYear()} 집수리모아.
+          <small>
+            © 2026 집수리모아.
             All rights reserved.
-          </p>
+          </small>
         </div>
       </footer>
     </main>
