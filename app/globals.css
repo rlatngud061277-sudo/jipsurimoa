@@ -9,15 +9,23 @@ html {
 
 body {
   margin: 0;
-  padding: 0;
-  font-family: Arial, "Apple SD Gothic Neo", sans-serif;
-  color: #172033;
   background: #ffffff;
+  color: #172033;
+  font-family: Arial, "Apple SD Gothic Neo",
+    "Malgun Gothic", sans-serif;
+  line-height: 1.6;
 }
 
 a {
-  text-decoration: none;
   color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 button {
@@ -25,332 +33,537 @@ button {
 }
 
 .container {
-  width: min(1120px, 92%);
+  width: min(1100px, 92%);
   margin: 0 auto;
 }
 
-/* =========================
-   상단 메뉴
-========================= */
+/* 상단 메뉴 */
 
 .header {
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.nav {
   min-height: 76px;
+  padding: 16px max(4%, calc((100% - 1100px) / 2));
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: white;
+  border-bottom: 1px solid #e5eaf2;
 }
 
 .logo {
-  font-size: 24px;
+  color: #1557c0;
+  font-size: 23px;
   font-weight: 800;
-  color: #155eef;
+  white-space: nowrap;
 }
 
-.menu {
+.header nav {
   display: flex;
-  align-items: center;
-  gap: 26px;
+  gap: 22px;
+}
+
+.header nav a,
+.header > a:not(.logo) {
   font-size: 14px;
   font-weight: 600;
 }
 
-.menu a:hover {
-  color: #155eef;
-}
-
-.menuButton {
-  display: none;
-  border: 0;
-  background: none;
-  font-size: 27px;
-}
-
-.loginButton {
-  background: #155eef;
-  color: white !important;
-  padding: 12px 18px;
-  border-radius: 9px;
-}
-
-/* =========================
-   메인 대표 화면
-========================= */
+/* 메인 검색 영역 */
 
 .hero {
   background: linear-gradient(
     135deg,
-    #eff6ff,
-    #ffffff
+    #1557c0,
+    #3178e8
   );
-  padding: 115px 0;
+  color: white;
+  padding: 75px 0 85px;
+  text-align: center;
 }
 
 .heroBadge {
   display: inline-block;
-  color: #155eef;
+  padding: 7px 14px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.17);
+  color: white;
   font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  margin-bottom: 22px;
+  font-weight: 600;
 }
 
 .hero h1 {
-  font-size: clamp(32px, 5vw, 54px);
-  line-height: 1.35;
-  letter-spacing: -2px;
-  margin: 0 0 24px;
+  font-size: clamp(27px, 5vw, 43px);
+  line-height: 1.4;
+  margin: 22px 0;
+  letter-spacing: -1px;
 }
 
 .hero p {
-  max-width: 650px;
-  color: #64748b;
-  line-height: 1.9;
-  font-size: 17px;
+  font-size: 16px;
+  opacity: 0.9;
+  margin-bottom: 32px;
 }
 
-.heroButtons {
-  display: flex;
-  flex-wrap: wrap;
+.searchBox {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 22px;
+  background: white;
+  border-radius: 18px;
+  display: grid;
   gap: 12px;
-  margin-top: 35px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
 }
 
-.primaryButton,
-.secondaryButton {
-  display: inline-block;
-  padding: 16px 25px;
-  border-radius: 10px;
-  font-weight: 700;
+.searchBox input,
+.searchBox select,
+.filterBox select {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #dce3ed;
+  border-radius: 9px;
+  background: white;
+  color: #172033;
+  min-width: 0;
 }
+
+.searchBox input:focus,
+.searchBox select:focus,
+.filterBox select:focus {
+  outline: 2px solid #93c5fd;
+  border-color: #2563eb;
+}
+
+/* 버튼 */
 
 .primaryButton {
-  background: #155eef;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 20px;
+  border: 0;
+  border-radius: 9px;
+  background: #2563eb;
   color: white;
+  font-weight: 700;
+  text-align: center;
 }
 
 .primaryButton:hover {
-  background: #1049bd;
+  background: #1749b8;
 }
 
-.secondaryButton {
+.outlineButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border: 1px solid #2563eb;
+  border-radius: 9px;
   background: white;
-  color: #155eef;
-  border: 1px solid #cbd5e1;
+  color: #2563eb;
+  font-weight: 700;
+  text-align: center;
 }
 
-/* =========================
-   서비스 소개
-========================= */
+.whiteButton {
+  display: inline-block;
+  padding: 13px 25px;
+  background: white;
+  color: #1557c0;
+  border-radius: 9px;
+  font-weight: 700;
+}
+
+/* 공통 섹션 */
 
 .section {
-  padding: 100px 0;
+  padding-top: 55px;
+  padding-bottom: 55px;
 }
 
-.sectionHeading {
-  text-align: center;
-  margin-bottom: 50px;
+.sectionTitle {
+  margin-bottom: 25px;
 }
 
-.sectionHeading span,
-.about span {
-  color: #155eef;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 2px;
+.sectionTitle h2 {
+  font-size: 25px;
+  margin: 0 0 6px;
 }
 
-.sectionHeading h2,
-.about h2,
-.contact h2 {
-  font-size: clamp(26px, 4vw, 38px);
-  margin: 15px 0;
-}
-
-.sectionHeading p,
-.about p,
-.contact p {
+.sectionTitle p {
   color: #64748b;
-  line-height: 1.9;
+  margin: 0;
 }
+
+/* 시공 종류 */
 
 .serviceGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
 .serviceCard {
-  padding: 30px 24px;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 115px;
+  padding: 15px 8px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.serviceCard span {
+  font-size: 27px;
+}
+
+.serviceCard strong {
+  font-size: 13px;
+  text-align: center;
+}
+
+.serviceCard.selected {
+  border: 2px solid #2563eb;
+  background: #dbeafe;
+}
+
+/* 업체 카드 */
+
+.companyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.companyCard {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   background: white;
-  transition: 0.2s;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
 }
 
-.serviceCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(
-    0,
-    0,
-    0,
-    0.06
-  );
+.companyImage {
+  height: 190px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.serviceIcon {
-  font-size: 32px;
-  margin-bottom: 20px;
+.companyImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.serviceCard h3 {
+.companyImage span {
+  font-size: 45px;
+}
+
+.companyContent {
+  padding: 22px;
+}
+
+.companyBadge {
+  display: inline-block;
+  padding: 5px 10px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.companyContent h3 {
+  font-size: 21px;
+  margin: 12px 0 8px;
+}
+
+.companyContent p {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.companyInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 20px 0;
+  font-size: 13px;
+  color: #475569;
+}
+
+.companyActions {
+  display: flex;
+  gap: 10px;
+}
+
+.companyActions a {
+  flex: 1;
+}
+
+.emptyBox {
+  padding: 45px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: #64748b;
+  text-align: center;
+  background: #f8fafc;
+}
+
+/* 업체 등록 안내 */
+
+.registerBanner {
+  background: #1557c0;
+  color: white;
+  text-align: center;
+  padding: 55px 20px;
+}
+
+.registerBanner h2 {
+  font-size: 25px;
+}
+
+.registerBanner p {
+  margin-bottom: 25px;
+}
+
+/* 하단 */
+
+.footer {
+  background: #f8fafc;
+  padding: 35px 0;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.footer strong {
+  color: #1557c0;
   font-size: 19px;
 }
 
-.serviceCard p {
-  font-size: 14px;
-  line-height: 1.8;
-  color: #64748b;
+.footer p {
+  margin: 8px 0;
 }
 
-/* =========================
-   회사 소개
-========================= */
+/* 업체 검색 및 상세페이지 */
 
-.about {
-  padding: 95px 0;
-  background: #f8fafc;
-  text-align: center;
+.pageHero {
+  padding: 45px 0;
+  background: #eff6ff;
 }
 
-.about p {
-  max-width: 650px;
-  margin: 20px auto;
+.pageHero h1 {
+  color: #1557c0;
+  font-size: 30px;
+  margin: 0 0 12px;
 }
 
-/* =========================
-   제작 문의
-========================= */
-
-.contact {
-  text-align: center;
+.pageHero p {
+  color: #475569;
 }
 
-.contact p {
+.pageHero .heroBadge {
+  background: #2563eb;
+  margin-bottom: 12px;
+}
+
+.filterBox {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   margin-bottom: 30px;
 }
 
-.contact small {
-  display: block;
-  color: #94a3b8;
-  margin-top: 20px;
+.detailCard {
+  padding: 30px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
 }
 
-/* =========================
-   하단 푸터
-========================= */
-
-.footer {
-  background: #111827;
-  color: white;
-  padding: 45px 0;
-}
-
-.footer h3 {
+.detailCard h2 {
   margin-top: 0;
 }
 
-.footer p {
-  color: #94a3b8;
-  font-size: 13px;
-  line-height: 1.8;
+.detailCard h3 {
+  margin-top: 25px;
+  color: #1557c0;
 }
 
-/* =========================
-   모바일 반응형 디자인
-========================= */
+.detailCard p {
+  color: #475569;
+}
 
-@media (max-width: 768px) {
-  .nav {
-    min-height: 65px;
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.photoGrid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* 업체 등록 양식 */
+
+.registerCard {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 30px;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+}
+
+.registerCard h2 {
+  margin-top: 0;
+  color: #1557c0;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 25px;
+}
+
+.formGroup > label {
+  font-weight: 700;
+}
+
+.formGroup > input,
+.formGroup textarea {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #172033;
+}
+
+.formGroup textarea {
+  resize: vertical;
+}
+
+.formHint {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.checkGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.checkGrid label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.checkGrid input {
+  accent-color: #2563eb;
+}
+
+.fullButton {
+  width: 100%;
+}
+
+/* 모바일 */
+
+@media (max-width: 650px) {
+  .header {
+    padding: 15px 4%;
   }
 
   .logo {
-    font-size: 21px;
+    font-size: 19px;
   }
 
-  .menuButton {
-    display: block;
+  .header nav {
+    gap: 12px;
   }
 
-  .menu {
-    display: none;
-    position: absolute;
-    top: 65px;
-    left: 0;
-    right: 0;
-    background: white;
-    padding: 24px;
-    flex-direction: column;
-    align-items: stretch;
-    border-bottom: 1px solid #e5e7eb;
-    box-shadow: 0 10px 20px rgba(
-      0,
-      0,
-      0,
-      0.05
-    );
-  }
-
-  .menu.open {
-    display: flex;
+  .header nav a {
+    font-size: 12px;
   }
 
   .hero {
-    padding: 75px 0;
+    padding: 50px 0 60px;
   }
 
   .hero h1 {
-    letter-spacing: -1px;
+    font-size: 27px;
   }
 
   .hero p {
-    font-size: 15px;
+    font-size: 14px;
   }
 
-  .heroButtons {
-    flex-direction: column;
-  }
-
-  .primaryButton,
-  .secondaryButton {
-    text-align: center;
+  .searchBox {
+    padding: 15px;
   }
 
   .section {
-    padding: 70px 0;
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .sectionTitle h2 {
+    font-size: 21px;
   }
 
   .serviceGrid {
-    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .serviceCard {
-    padding: 25px;
+    min-height: 105px;
   }
 
-  .about {
-    padding: 70px 0;
+  .serviceCard strong {
+    font-size: 12px;
   }
 
-  .footer {
-    padding: 35px 0;
+  .companyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .companyActions {
+    flex-direction: column;
+  }
+
+  .pageHero h1 {
+    font-size: 25px;
+  }
+
+  .detailCard {
+    padding: 20px;
+  }
+
+  .photoGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .registerCard {
+    padding: 18px;
+  }
+
+  .checkGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
