@@ -6,8 +6,7 @@ import { useState } from "react";
 import { companies, services, regions } from "./data";
 
 /* =====================================
-   시공 종류별 예시 사진
-   나중에 직접 촬영한 사진으로 교체 가능
+   시공 종류별 사진
 ===================================== */
 
 const serviceImages: Record<string, string> = {
@@ -33,7 +32,7 @@ const serviceImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&auto=format&fit=crop&q=80",
 
   "에어컨":
-    "https://images.unsplash.com/photo-1631545806609-6b35d97e2b6b?w=600&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=600&auto=format&fit=crop&q=80",
 
   "수전 교체":
     "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=600&auto=format&fit=crop&q=80",
@@ -48,18 +47,10 @@ const serviceImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=600&auto=format&fit=crop&q=80",
 };
 
-/* =====================================
-   메인 홈페이지
-===================================== */
-
 export default function Home() {
   const [region, setRegion] = useState("");
   const [service, setService] = useState("");
   const [keyword, setKeyword] = useState("");
-
-  /* =====================================
-     업체 검색
-  ===================================== */
 
   const filtered = companies.filter((company) => {
     const matchRegion =
@@ -87,9 +78,7 @@ export default function Home() {
 
   return (
     <main>
-      {/* =====================================
-          상단 메뉴
-      ===================================== */}
+      {/* 상단 메뉴 */}
 
       <header className="header">
         <Link href="/" className="logo">
@@ -102,9 +91,7 @@ export default function Home() {
         </nav>
       </header>
 
-      {/* =====================================
-          메인 검색 화면
-      ===================================== */}
+      {/* 메인 검색 화면 */}
 
       <section className="hero">
         <div className="container">
@@ -175,9 +162,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* =====================================
-          시공 종류별 사진 카테고리
-      ===================================== */}
+      {/* 시공 종류별 사진 카테고리 */}
 
       <section className="section container">
         <div className="sectionTitle">
@@ -248,9 +233,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* =====================================
-          업체 검색 결과
-      ===================================== */}
+      {/* 업체 검색 결과 */}
 
       <section
         id="results"
@@ -328,9 +311,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* =====================================
-          업체 등록 안내
-      ===================================== */}
+      {/* 업체 등록 안내 */}
 
       <section className="registerBanner">
         <div className="container">
@@ -352,9 +333,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* =====================================
-          하단 정보
-      ===================================== */}
+      {/* 하단 정보 */}
 
       <footer className="footer">
         <div className="container">
