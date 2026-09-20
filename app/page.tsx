@@ -1,12 +1,53 @@
-
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { companies, services, regions } from "./data";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { regions, services } from "./data";
+import type { Company } from "./data";
 
 /* =====================================
-   시공 종류별 사진
+   Supabase 연결
+===================================== */
+
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(
+    /\/rest\/v1\/?$/,
+    ""
+  ) ?? "";
+
+const SUPABASE_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+type CompanyRow = {
+  id: string;
+  name: string | null;
+  description: string | null;
+  phone: string | null;
+  regions: string[] | null;
+  services: string[] | null;
+  images: string[] | null;
+};
+
+function toCompany(row: CompanyRow): Company {
+  return {
+    id: row.id,
+    name: row.name ?? "",
+    description: row.description ?? "",
+    phone: row.phone ?? "",
+    regions: Array.isArray(row.regions)
+      ? row.regions
+      : [],
+    services: Array.isArray(row.services)
+      ? row.services
+      : [],
+    images: Array.isArray(row.images)
+      ? row.images
+      : [],
+  };
+}
+
+/* =====================================
+   시공 종류별 이미지
 ===================================== */
 
 const serviceImages: Record<string, string> = {
@@ -47,34 +88,128 @@ const serviceImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=600&auto=format&fit=crop&q=80",
 };
 
+/* =====================================
+   메인 홈페이지
+===================================== */
+
 export default function Home() {
+  const [companies, setCompanies] = useState<Company[]>([]);
+
   const [region, setRegion] = useState("");
   const [service, setService] = useState("");
   const [keyword, setKeyword] = useState("");
 
-  const filtered = companies.filter((company) => {
-    const matchRegion =
-      !region || company.regions.includes(region);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    const matchService =
-      !service || company.services.includes(service);
+  /* =====================================
+     승인 업체 불러오기
+  ===================================== */
 
-    const matchKeyword =
-      !keyword ||
-      `${company.name} ${company.description} ${company.services.join(
-        " "
-      )} ${company.regions.join(" ")}`
-        .toLowerCase()
-        .includes(keyword.toLowerCase());
+  const loadCompanies = useCallback(async () => {
+    setLoading(true);
+    setError("");
 
-    return matchRegion && matchService && matchKeyword;
-  });
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      setError(
+        "업체 검색 설정을 확인할 수 없습니다."
+      );
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/approved_companies?select=id,name,description,phone,regions,services,images`,
+        {
+          method: "GET",
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `업체 목록을 불러오지 못했습니다. (${response.status})`
+        );
+      }
+
+      const rows: unknown = await response.json();
+
+      if (!Array.isArray(rows)) {
+        throw new Error(
+          "업체 목록의 응답 형식이 올바르지 않습니다."
+        );
+      }
+
+      setCompanies(
+        (rows as CompanyRow[]).map(toCompany)
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "업체 목록을 불러오는 중 오류가 발생했습니다."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadCompanies();
+  }, [loadCompanies]);
+
+  /* =====================================
+     업체 검색
+  ===================================== */
+
+  const filtered = useMemo(() => {
+    const normalizedKeyword =
+      keyword.trim().toLowerCase();
+
+    return companies.filter((company) => {
+      const matchRegion =
+        !region || company.regions.includes(region);
+
+      const matchService =
+        !service || company.services.includes(service);
+
+      const searchableText = [
+        company.name,
+        company.description,
+        ...company.services,
+        ...company.regions,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchKeyword =
+        !normalizedKeyword ||
+        searchableText.includes(normalizedKeyword);
+
+      return (
+        matchRegion &&
+        matchService &&
+        matchKeyword
+      );
+    });
+  }, [companies, region, service, keyword]);
 
   function scrollToResults() {
     document
       .getElementById("results")
-      ?.scrollIntoView({ behavior: "smooth" });
+      ?.scrollIntoView({
+        behavior: "smooth",
+      });
   }
+
+  /* =====================================
+     화면
+  ===================================== */
 
   return (
     <main>
@@ -86,8 +221,13 @@ export default function Home() {
         </Link>
 
         <nav>
-          <Link href="/companies">업체 찾기</Link>
-          <Link href="/register">업체 등록</Link>
+          <Link href="/companies">
+            업체 찾기
+          </Link>
+
+          <Link href="/register">
+            업체 등록
+          </Link>
         </nav>
       </header>
 
@@ -113,13 +253,20 @@ export default function Home() {
           <div className="searchBox">
             <select
               value={region}
-              onChange={(e) => setRegion(e.target.value)}
+              onChange={(event) =>
+                setRegion(event.target.value)
+              }
               aria-label="지역 선택"
             >
-              <option value="">전체 지역</option>
+              <option value="">
+                전체 지역
+              </option>
 
               {regions.map((item) => (
-                <option key={item} value={item}>
+                <option
+                  key={item}
+                  value={item}
+                >
                   {item}
                 </option>
               ))}
@@ -129,9 +276,11 @@ export default function Home() {
               type="search"
               placeholder="업체명 또는 시공 키워드"
               value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
+              onChange={(event) =>
+                setKeyword(event.target.value)
+              }
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
                   scrollToResults();
                 }
               }}
@@ -139,13 +288,20 @@ export default function Home() {
 
             <select
               value={service}
-              onChange={(e) => setService(e.target.value)}
+              onChange={(event) =>
+                setService(event.target.value)
+              }
               aria-label="시공 종류 선택"
             >
-              <option value="">전체 시공 종류</option>
+              <option value="">
+                전체 시공 종류
+              </option>
 
               {services.map((item) => (
-                <option key={item} value={item}>
+                <option
+                  key={item}
+                  value={item}
+                >
                   {item}
                 </option>
               ))}
@@ -162,11 +318,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 시공 종류별 사진 카테고리 */}
+      {/* 시공 종류별 카테고리 */}
 
       <section className="section container">
         <div className="sectionTitle">
-          <h2>어떤 시공이 필요하세요?</h2>
+          <h2>
+            어떤 시공이 필요하세요?
+          </h2>
 
           <p>
             필요한 집수리 서비스를 선택해 보세요.
@@ -240,73 +398,129 @@ export default function Home() {
         className="section container"
       >
         <div className="sectionTitle">
-          <h2>집수리 업체 둘러보기</h2>
+          <h2>
+            집수리 업체 둘러보기
+          </h2>
 
           <p>
-            검색 조건에 맞는 업체 {filtered.length}곳
+            {loading
+              ? "업체 목록을 불러오는 중입니다..."
+              : error
+              ? "업체 목록을 불러오지 못했습니다."
+              : `검색 조건에 맞는 업체 ${filtered.length}곳`}
           </p>
         </div>
 
-        <div className="companyGrid">
-          {filtered.map((company) => (
-            <article
-              className="companyCard"
-              key={company.id}
+        {error && (
+          <div
+            className="emptyBox"
+            role="alert"
+            style={{
+              color: "#b91c1c",
+            }}
+          >
+            {error}
+
+            <div
+              style={{
+                marginTop: "14px",
+              }}
             >
-              <div className="companyImage">
-                {company.images.length > 0 ? (
-                  <img
-                    src={company.images[0]}
-                    alt={`${company.name} 시공사례`}
-                    loading="lazy"
-                  />
-                ) : (
-                  <span aria-hidden="true">🏠</span>
-                )}
+              <button
+                type="button"
+                onClick={() => {
+                  void loadCompanies();
+                }}
+                className="outlineButton"
+              >
+                다시 불러오기
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!error && !loading && (
+          <>
+            <div className="companyGrid">
+              {filtered.map((company) => (
+                <article
+                  className="companyCard"
+                  key={company.id}
+                >
+                  <div className="companyImage">
+                    {company.images.length > 0 ? (
+                      <img
+                        src={company.images[0]}
+                        alt={`${company.name} 시공사례`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span aria-hidden="true">
+                        🏠
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="companyContent">
+                    <span className="companyBadge">
+                      등록 업체
+                    </span>
+
+                    <h3>
+                      {company.name}
+                    </h3>
+
+                    <p>
+                      {company.description}
+                    </p>
+
+                    <div className="companyInfo">
+                      <span>
+                        📍{" "}
+                        {company.regions.join(", ")}
+                      </span>
+
+                      <span>
+                        🛠️{" "}
+                        {company.services.join(", ")}
+                      </span>
+                    </div>
+
+                    <div className="companyActions">
+                      <Link
+                        href={`/companies/${company.id}`}
+                        className="outlineButton"
+                      >
+                        상세보기
+                      </Link>
+
+                      {company.phone && (
+                        <a
+                          href={`tel:${company.phone}`}
+                          className="primaryButton"
+                        >
+                          📞 전화 문의
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {filtered.length === 0 && (
+              <div className="emptyBox">
+                {companies.length === 0
+                  ? "현재 공개된 업체가 없습니다. 업체 승인 후 이곳에 표시됩니다."
+                  : "검색 조건에 맞는 등록 업체가 없습니다."}
               </div>
+            )}
+          </>
+        )}
 
-              <div className="companyContent">
-                <span className="companyBadge">
-                  등록 업체
-                </span>
-
-                <h3>{company.name}</h3>
-
-                <p>{company.description}</p>
-
-                <div className="companyInfo">
-                  <span>
-                    📍 {company.regions.join(", ")}
-                  </span>
-
-                  <span>
-                    🛠️ {company.services.join(", ")}
-                  </span>
-                </div>
-
-                <div className="companyActions">
-                  <Link
-                    href={`/companies/${company.id}`}
-                    className="outlineButton"
-                  >
-                    상세보기
-                  </Link>
-
-                  <a
-                    href={`tel:${company.phone}`}
-                    className="primaryButton"
-                  >
-                    📞 전화 문의
-                  </a>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {filtered.length === 0 && (
+        {loading && (
           <div className="emptyBox">
-            검색 조건에 맞는 등록 업체가 없습니다.
+            업체 목록을 불러오는 중입니다...
           </div>
         )}
       </section>
@@ -337,7 +551,9 @@ export default function Home() {
 
       <footer className="footer">
         <div className="container">
-          <strong>집수리모아</strong>
+          <strong>
+            집수리모아
+          </strong>
 
           <p>
             전국 집수리 업체 검색 및 연결 플랫폼
