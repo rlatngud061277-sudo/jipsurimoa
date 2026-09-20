@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { regions, services } from "../data";
 
 type ApplicationData = {
@@ -13,6 +14,13 @@ type ApplicationData = {
   services: string[];
   images: string[];
   status: string;
+};
+
+type SupabaseError = {
+  message?: string;
+  code?: string;
+  details?: string | null;
+  hint?: string | null;
 };
 
 export default function RegisterPage() {
@@ -41,22 +49,37 @@ export default function RegisterPage() {
     );
   }
 
-  function handlePreview(e: React.FormEvent<HTMLFormElement>) {
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  function handlePreview(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!name.trim() || !owner.trim() || !phone.trim() || !description.trim()) {
-      alert("필수 정보를 모두 입력해 주세요.");
+    if (
+      !name.trim() ||
+      !owner.trim() ||
+      !phone.trim() ||
+      !description.trim()
+    ) {
+      setErrorMessage("필수 정보를 모두 입력해 주세요.");
       return;
     }
 
-    if (selectedRegions.length === 0 || selectedServices.length === 0) {
-      alert("서비스 지역과 시공 분야를 선택해 주세요.");
+    if (
+      selectedRegions.length === 0 ||
+      selectedServices.length === 0
+    ) {
+      setErrorMessage("서비스 지역과 시공 분야를 선택해 주세요.");
       return;
     }
 
     setErrorMessage("");
     setPreview(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToTop();
   }
 
   async function handleFinalSubmit() {
@@ -66,12 +89,15 @@ export default function RegisterPage() {
     setErrorMessage("");
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      const supabaseUrl =
+        process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+
+      const supabaseAnonKey =
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
       if (!supabaseUrl || !supabaseAnonKey) {
         throw new Error(
-          "Supabase 연결 정보가 없습니다. Vercel 환경변수를 확인해 주세요."
+          "Supabase 연결 정보가 없습니다. Vercel의 NEXT_PUBLIC_SUPABASE_URL 및 NEXT_PUBLIC_SUPABASE_ANON_KEY를 확인해 주세요."
         );
       }
 
@@ -86,39 +112,82 @@ export default function RegisterPage() {
         status: "pending",
       };
 
-      const response = await fetch(
-        `${supabaseUrl.replace(/\/$/, "")}/rest/v1/company_applications`,
-        {
-          method: "POST",
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            "Content-Type": "application/json",
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify(application),
-        }
-      );
+      const apiUrl =
+        `${supabaseUrl.replace(/\/+$/, "")}` +
+        "/rest/v1/company_applications";
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify(application),
+      });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const responseText = await response.text();
 
-        console.error("업체 등록 신청 오류:", response.status, errorText);
+        let errorDetails = responseText;
+
+        try {
+          const parsedError = JSON.parse(
+            responseText
+          ) as SupabaseError;
+
+          errorDetails = [
+            parsedError.message,
+            parsedError.code
+              ? `코드: ${parsedError.code}`
+              : "",
+            parsedError.details
+              ? `상세: ${parsedError.details}`
+              : "",
+            parsedError.hint
+              ? `힌트: ${parsedError.hint}`
+              : "",
+          ]
+            .filter(Boolean)
+            .join("\n");
+        } catch {
+          // JSON이 아닌 오류 응답은 원문을 표시합니다.
+        }
+
+        console.error("업체 등록 신청 실패:", {
+          status: response.status,
+          details: errorDetails,
+        });
 
         throw new Error(
-          `신청 저장에 실패했습니다. (오류 코드: ${response.status})`
+          `신청 저장에 실패했습니다.\n` +
+            `HTTP 오류 코드: ${response.status}\n` +
+            `${errorDetails || "서버에서 오류 내용을 반환하지 않았습니다."}`
         );
       }
 
       setSubmitted(true);
       setPreview(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTop();
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "신청 중 오류가 발생했습니다. 다시 시도해 주세요."
-      );
+      console.error("업체 등록 신청 오류:", error);
+
+      if (error instanceof TypeError) {
+        setErrorMessage(
+          "서버 연결에 실패했습니다.\n" +
+            "Supabase URL, 인터넷 연결 또는 API 접근 설정을 확인해 주세요.\n" +
+            `상세 오류: ${error.message}`
+        );
+      } else {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "알 수 없는 오류가 발생했습니다. 다시 시도해 주세요."
+        );
+      }
+
+      scrollToTop();
     } finally {
       setSubmitting(false);
     }
@@ -131,7 +200,9 @@ export default function RegisterPage() {
           🏠 집수리모아
         </Link>
 
-        <Link href="/companies">업체 찾기</Link>
+        <Link href="/companies">
+          업체 찾기
+        </Link>
       </header>
 
       <section className="pageHero">
@@ -153,7 +224,8 @@ export default function RegisterPage() {
 
               <p>
                 업체 등록 신청이 정상적으로 저장되었습니다.
-                신청 내용을 확인한 뒤 등록 여부를 안내해 드리겠습니다.
+                신청 내용을 확인한 뒤 등록 여부를
+                안내해 드리겠습니다.
               </p>
 
               <p>
@@ -164,8 +236,8 @@ export default function RegisterPage() {
                 <strong>연락처:</strong> {phone}
               </p>
 
-              <p>
-                ※ 신청서를 제출했다고 해서 업체 목록에
+              <p className="formHint">
+                신청서를 제출했다고 해서 업체 목록에
                 즉시 공개되는 것은 아닙니다.
               </p>
 
@@ -178,7 +250,8 @@ export default function RegisterPage() {
               <h2>등록 신청 내용 확인</h2>
 
               <p>
-                아래 내용을 확인한 후 등록 신청을 제출해 주세요.
+                아래 내용을 확인한 후 등록 신청을
+                제출해 주세요.
               </p>
 
               <p>
@@ -213,17 +286,25 @@ export default function RegisterPage() {
               </p>
 
               {errorMessage && (
-                <p
+                <div
                   role="alert"
                   style={{
-                    color: "#b91c1c",
+                    color: "#991b1b",
                     background: "#fef2f2",
-                    padding: "12px",
-                    borderRadius: "8px",
+                    border: "1px solid #fecaca",
+                    padding: "14px",
+                    borderRadius: "10px",
+                    marginBottom: "16px",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    fontSize: "14px",
+                    lineHeight: 1.6,
                   }}
                 >
+                  <strong>등록 신청 오류</strong>
+                  <br />
                   {errorMessage}
-                </p>
+                </div>
               )}
 
               <button
@@ -263,7 +344,9 @@ export default function RegisterPage() {
                   id="companyName"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) =>
+                    setName(e.target.value)
+                  }
                   placeholder="업체명을 입력하세요"
                 />
               </div>
@@ -277,7 +360,9 @@ export default function RegisterPage() {
                   id="ownerName"
                   required
                   value={owner}
-                  onChange={(e) => setOwner(e.target.value)}
+                  onChange={(e) =>
+                    setOwner(e.target.value)
+                  }
                   placeholder="대표자명"
                 />
               </div>
@@ -292,7 +377,9 @@ export default function RegisterPage() {
                   required
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) =>
+                    setPhone(e.target.value)
+                  }
                   placeholder="010-0000-0000"
                 />
               </div>
@@ -305,7 +392,9 @@ export default function RegisterPage() {
                     <label key={region}>
                       <input
                         type="checkbox"
-                        checked={selectedRegions.includes(region)}
+                        checked={selectedRegions.includes(
+                          region
+                        )}
                         onChange={() =>
                           toggle(
                             region,
@@ -329,7 +418,9 @@ export default function RegisterPage() {
                     <label key={service}>
                       <input
                         type="checkbox"
-                        checked={selectedServices.includes(service)}
+                        checked={selectedServices.includes(
+                          service
+                        )}
                         onChange={() =>
                           toggle(
                             service,
@@ -367,9 +458,27 @@ export default function RegisterPage() {
 
                 <p className="formHint">
                   사진 업로드 기능은 준비 중입니다.
-                  현재는 업체 기본정보만 등록 신청할 수 있습니다.
+                  현재는 업체 기본정보만 등록 신청할 수
+                  있습니다.
                 </p>
               </div>
+
+              {errorMessage && (
+                <div
+                  role="alert"
+                  style={{
+                    color: "#991b1b",
+                    background: "#fef2f2",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    marginBottom: "16px",
+                  }}
+                >
+                  {errorMessage}
+                </div>
+              )}
 
               <button
                 type="submit"
