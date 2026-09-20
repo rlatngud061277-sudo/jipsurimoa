@@ -32,7 +32,7 @@ const serviceImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&auto=format&fit=crop&q=80",
 
   "에어컨":
-    "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=600&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&auto=format&fit=crop&q=80",
 
   "수전 교체":
     "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=600&auto=format&fit=crop&q=80",
@@ -125,6 +125,18 @@ export default function Home() {
               ))}
             </select>
 
+            <input
+              type="search"
+              placeholder="업체명 또는 시공 키워드"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  scrollToResults();
+                }
+              }}
+            />
+
             <select
               value={service}
               onChange={(e) => setService(e.target.value)}
@@ -138,18 +150,6 @@ export default function Home() {
                 </option>
               ))}
             </select>
-
-            <input
-              type="search"
-              placeholder="업체명 또는 시공 키워드"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  scrollToResults();
-                }
-              }}
-            />
 
             <button
               type="button"
