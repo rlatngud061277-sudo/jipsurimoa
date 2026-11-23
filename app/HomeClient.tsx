@@ -47,6 +47,34 @@ const SERVICE_PAGE_LINKS: Record<string, string> = {
 };
 
 /* =====================================
+   시공별 연결 업체
+   - 쿡탑 설치 → 열정쿡탑
+   - 에어컨 · 수전 교체 → 고쳐줘 홈닥터
+===================================== */
+
+const PARTNER_PHONE = "010-9413-4686";
+
+type ServicePartner = {
+  name: string;
+  url: string;
+};
+
+const SERVICE_PARTNERS: Record<string, ServicePartner> = {
+  "쿡탑 설치": {
+    name: "열정쿡탑",
+    url: "https://www.yeoljeongcooktop.com",
+  },
+  "에어컨": {
+    name: "고쳐줘 홈닥터",
+    url: "https://www.gochyeojwo.com",
+  },
+  "수전 교체": {
+    name: "고쳐줘 홈닥터",
+    url: "https://www.gochyeojwo.com",
+  },
+};
+
+/* =====================================
    전국 시·도 / 시·군·구
 ===================================== */
 
@@ -253,6 +281,37 @@ export type HomeCompanyRow = {
   images: string[] | null;
   website_url: string | null;
 };
+
+const PARTNER_COMPANIES: CompanyWithWebsite[] = [
+  {
+    id: "partner-yeoljeongcooktop",
+    name: "열정쿡탑",
+    description:
+      "빌트인 쿡탑, 가스쿡탑, 인덕션, 가스레인지 교체와 주방 상판 타공을 전국에서 진행하는 쿡탑 전문 시공업체입니다.",
+    phone: PARTNER_PHONE,
+    regions: ["전국"],
+    services: ["쿡탑 설치"],
+    images: ["/IMG_2972.jpeg"],
+    website_url: "https://www.yeoljeongcooktop.com",
+  },
+  {
+    id: "partner-gochyeojwo",
+    name: "고쳐줘 홈닥터",
+    description:
+      "에어컨 실외기 배선 테이핑·피복 보수와 주방·욕실 수전, 폭포수전 교체를 사진 견적으로 먼저 상담하는 집수리 출장 업체입니다.",
+    phone: PARTNER_PHONE,
+    regions: ["서울", "경기", "인천", "충남", "충북"],
+    services: ["에어컨", "수전 교체"],
+    images: ["/IMG_2756.jpeg"],
+    website_url: "https://www.gochyeojwo.com",
+  },
+];
+
+function isPartner(
+  company: CompanyWithWebsite
+): boolean {
+  return company.id.startsWith("partner-");
+}
 
 type PopularKeyword = {
   keyword: string;
@@ -885,7 +944,15 @@ export default function Home({
   }
 
   const filtered = useMemo(() => {
-    return companies.filter((company) => {
+    return [
+      ...PARTNER_COMPANIES,
+      ...companies.filter(
+        (company) =>
+          company.services.some((item) =>
+            services.includes(item)
+          )
+      ),
+    ].filter((company) => {
       const matchProvince =
         !selectedProvince ||
         (
@@ -1551,11 +1618,22 @@ export default function Home({
 
         <div className="serviceGrid">
           {services.map((item) => (
-            <Link
+            <a
               key={item}
               href={
+                SERVICE_PARTNERS[item]?.url ??
                 SERVICE_PAGE_LINKS[item] ??
                 "/companies"
+              }
+              target={
+                SERVICE_PARTNERS[item]
+                  ? "_blank"
+                  : undefined
+              }
+              rel={
+                SERVICE_PARTNERS[item]
+                  ? "noopener"
+                  : undefined
               }
               className="serviceCard"
               style={{
@@ -1599,8 +1677,22 @@ export default function Home({
                 }}
               >
                 {item}
+
+                {SERVICE_PARTNERS[item] && (
+                  <span
+                    style={{
+                      display: "block",
+                      marginTop: "4px",
+                      color: "#2563eb",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {SERVICE_PARTNERS[item].name} 바로가기 →
+                  </span>
+                )}
               </strong>
-            </Link>
+            </a>
           ))}
         </div>
       </section>
@@ -1704,7 +1796,9 @@ export default function Home({
 
                     <div className="companyContent">
                       <span className="companyBadge">
-                        등록 업체
+                        {isPartner(company)
+                          ? "추천 업체"
+                          : "등록 업체"}
                       </span>
 
                       <h3>{company.name}</h3>
@@ -1726,14 +1820,26 @@ export default function Home({
                       </div>
 
                       <div className="companyActions">
-                        <Link
-                          href={`/companies/${encodeURIComponent(
-                            company.id
-                          )}`}
-                          className="outlineButton"
-                        >
-                          상세보기
-                        </Link>
+                        {isPartner(company) &&
+                        company.website_url ? (
+                          <a
+                            href={company.website_url}
+                            target="_blank"
+                            rel="noopener"
+                            className="outlineButton"
+                          >
+                            홈페이지 보기
+                          </a>
+                        ) : (
+                          <Link
+                            href={`/companies/${encodeURIComponent(
+                              company.id
+                            )}`}
+                            className="outlineButton"
+                          >
+                            상세보기
+                          </Link>
+                        )}
 
                         {company.phone && (
                           <a
