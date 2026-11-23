@@ -9,7 +9,11 @@ import {
   useState,
 } from "react";
 
-import { regions, services } from "../data";
+import {
+  partnerCompanies,
+  regions,
+  services,
+} from "../data";
 import type { Company } from "../data";
 import Footer from "../Footer";
 
@@ -384,10 +388,19 @@ export default function CompaniesPage() {
   ===================================== */
 
   const results = useMemo(() => {
-    return companies.filter((company) => {
+    return [
+      ...partnerCompanies,
+      ...companies.filter(
+        (company) =>
+          company.services.some((item) =>
+            services.includes(item)
+          )
+      ),
+    ].filter((company) => {
       const matchRegion =
         !region ||
-        company.regions.includes(region);
+        company.regions.includes(region) ||
+        company.regions.includes("전국");
 
       const matchService =
         !service ||
@@ -723,7 +736,9 @@ export default function CompaniesPage() {
 
                     <div className="companyContent">
                       <span className="companyBadge">
-                        등록 업체
+                        {company.id.startsWith("partner-")
+                          ? "추천 업체"
+                          : "등록 업체"}
                       </span>
 
                       <h3>{company.name}</h3>
@@ -745,14 +760,26 @@ export default function CompaniesPage() {
                       {/* 업체별 내부 홍보 페이지 연결 */}
 
                       <div className="companyActions">
-                        <Link
-                          href={`/companies/${encodeURIComponent(
-                            company.id
-                          )}`}
-                          className="primaryButton"
-                        >
-                          업체 상세보기
-                        </Link>
+                        {company.id.startsWith("partner-") &&
+                        company.website_url ? (
+                          <a
+                            href={company.website_url}
+                            target="_blank"
+                            rel="noopener"
+                            className="primaryButton"
+                          >
+                            홈페이지 보기
+                          </a>
+                        ) : (
+                          <Link
+                            href={`/companies/${encodeURIComponent(
+                              company.id
+                            )}`}
+                            className="primaryButton"
+                          >
+                            업체 상세보기
+                          </Link>
+                        )}
 
                         {company.phone && (
                           <a

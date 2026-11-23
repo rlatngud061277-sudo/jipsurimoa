@@ -8,7 +8,11 @@ import {
   useState,
 } from "react";
 
-import { regions, services } from "./data";
+import {
+  partnerCompanies,
+  regions,
+  services,
+} from "./data";
 import type { Company } from "./data";
 import Footer from "./Footer";
 
@@ -51,8 +55,6 @@ const SERVICE_PAGE_LINKS: Record<string, string> = {
    - 쿡탑 설치 → 열정쿡탑
    - 에어컨 · 수전 교체 → 고쳐줘 홈닥터
 ===================================== */
-
-const PARTNER_PHONE = "010-9413-4686";
 
 type ServicePartner = {
   name: string;
@@ -281,31 +283,6 @@ export type HomeCompanyRow = {
   images: string[] | null;
   website_url: string | null;
 };
-
-const PARTNER_COMPANIES: CompanyWithWebsite[] = [
-  {
-    id: "partner-yeoljeongcooktop",
-    name: "열정쿡탑",
-    description:
-      "빌트인 쿡탑, 가스쿡탑, 인덕션, 가스레인지 교체와 주방 상판 타공을 전국에서 진행하는 쿡탑 전문 시공업체입니다.",
-    phone: PARTNER_PHONE,
-    regions: ["전국"],
-    services: ["쿡탑 설치"],
-    images: ["/IMG_2972.jpeg"],
-    website_url: "https://www.yeoljeongcooktop.com",
-  },
-  {
-    id: "partner-gochyeojwo",
-    name: "고쳐줘 홈닥터",
-    description:
-      "에어컨 실외기 배선 테이핑·피복 보수와 주방·욕실 수전, 폭포수전 교체를 사진 견적으로 먼저 상담하는 집수리 출장 업체입니다.",
-    phone: PARTNER_PHONE,
-    regions: ["서울", "경기", "인천", "충남", "충북"],
-    services: ["에어컨", "수전 교체"],
-    images: ["/IMG_2756.jpeg"],
-    website_url: "https://www.gochyeojwo.com",
-  },
-];
 
 function isPartner(
   company: CompanyWithWebsite
@@ -945,7 +922,7 @@ export default function Home({
 
   const filtered = useMemo(() => {
     return [
-      ...PARTNER_COMPANIES,
+      ...partnerCompanies,
       ...companies.filter(
         (company) =>
           company.services.some((item) =>
